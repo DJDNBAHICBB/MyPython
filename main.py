@@ -2,8 +2,11 @@
 import re
 import sys
 import time
+import threading
+from queue import Queue
+
 import retrying
-import xlwt
+
 import urllib.request, parser
 from bs4 import BeautifulSoup
 import os
@@ -21,10 +24,13 @@ def ask(url):
 
 k = 0
 
-def process(num):
-    time.sleep(num)
+
+
+
+
 @retrying.retry( wait_random_min = 2000,wait_random_max = 10000)
-def download(baseurl):
+def download(baseurl,ti):
+    time.sleep(ti)
     global k
     head = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
@@ -57,13 +63,25 @@ def download(baseurl):
 
 def intourl(baseurl):
     if __name__ == '__main__':
+        q = Queue(200)
         html = ask(baseurl)
+        thread_list = []
         soup = BeautifulSoup(html, 'html.parser')
         for item in soup.find_all('div', class_='post-module-thumb'):
             item = str(item)
             first = re.findall(findload, item)
             for itemnxt in first:
-                download(itemnxt)
+                q.put(itemnxt)
+            if q.full():
+                break
+        while not q.empty():
+            for index in range(1,10):
+                thread_list.append(threading.Thread(target=download,args = (q.get(),index)))
+            for t in thread_list:
+                t.start()
+            for t in thread_list:
+                t.join()
+
 
 
 
