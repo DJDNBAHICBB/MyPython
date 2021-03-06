@@ -2,13 +2,11 @@ import os
 import re
 import socket
 import sys
-import time
 import threading
+import time
 from queue import Queue
-
 import retrying
-
-import urllib.request, parser
+import urllib.request
 from bs4 import BeautifulSoup
 DOWNLOAD_DELAY = 0.5
 RANDOMIZE_DOWNLOAD_DELAY = True
@@ -27,7 +25,7 @@ socket.setdefaulttimeout(20)
 
 @retrying.retry( wait_random_min = 1000,wait_random_max =5000)
 def downloadpic(t):
-    # time.sleep(t)
+    time.sleep(t)
     global k
     head = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
@@ -40,8 +38,6 @@ def downloadpic(t):
             name = name + str(k) + '.jpg'
             mutex.release()
             print(k)
-        if k >= 1000:
-            sys.exit(0)
         req = urllib.request.Request(url=items, headers=head)
         res = urllib.request.urlopen(req, timeout=20)
 
@@ -52,8 +48,10 @@ def downloadpic(t):
             os.remove(name)
         res.close()
     except Exception as e:
+        str_e = str(e)
+        if str_e.find('unknown url type') == -1:
+            q.put(items)
         print(e)
-        q.put(items)
         print(items + "  is back")
         raise e
 
@@ -98,24 +96,27 @@ def get_url(html):
 def intourl(baseurl):
     if __name__ == '__main__':
         html = []
-        for i in range(1, 2):
+        for i in range(1, 20):
             html.append(ask(baseurl+'%d'%i))
             get_url(html[i-1])
             print(q.qsize())
-            if q.qsize() >= 1000:
+            if q.qsize() >= 2000:
                 break
 
 
 def file_name(file_dir):
-         for files in os.walk(file_dir):
-             if os.path.getsize(files) == 0:
-                 os.remove(files)
+         for files in os.listdir(file_dir):
+             if os.path.getsize(file_dir+"\\"+str(files)) == 0:
+                 os.remove(file_dir+"\\"+str(files))
 
 
 findload = re.compile('<a href="(.*?)"')
 findimg = re.compile('"thumb-link" href="(.*?)"')
 url = "https://www.pixivacg.com/ssd/page/"
+dir_name = "D:\\爬虫图片"
+if not os.path.exists(dir_name):
+    os.mkdir(dir_name)
 intourl(url)
 print(q.qsize())
 download()
-file_name("D:\\爬虫图片")
+file_name(dir_name)
