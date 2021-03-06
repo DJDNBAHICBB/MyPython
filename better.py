@@ -106,6 +106,11 @@ def intourl(baseurl):
                 break
 
 
+def file_name(file_dir):
+         for files in os.walk(file_dir):
+             if os.path.getsize(files) == 0:
+                 os.remove(files)
+
 
 findload = re.compile('<a href="(.*?)"')
 findimg = re.compile('"thumb-link" href="(.*?)"')
@@ -113,3 +118,4 @@ url = "https://www.pixivacg.com/ssd/page/"
 intourl(url)
 print(q.qsize())
 download()
+file_name("D:\\爬虫图片")
